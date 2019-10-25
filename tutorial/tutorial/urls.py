@@ -25,7 +25,7 @@ User = get_user_model()
 
 
 router=routers.DefaultRouter()
-router.register(r'users',views.RegisterUser)
+router.register(r'users',views.ViewUser)
 # router.register(r'groups',views.GroupViewSet)
 # router.register(r'login',views.LoginRequest)
 
@@ -34,7 +34,13 @@ urlpatterns = [
     path('',include(router.urls)),
     path('api-auth/',include('rest_framework.urls',namespace='rest_framework')),
     path('token-auth/', obtain_jwt_token),
-    url(r'login/',LoginRequest.as_view()),
     url(r'', include(('rest_pyotp.routers','pyotp'), namespace='rest-pyotp-urls')),
-    url(r'signup/',views.SignUp.as_view()),
+    # url(r'signup/',views.SignUp.as_view()),
+    # url(r'activate/',views.Activate.as_view()),
+
+    url(r'^api/signup/$', views.SignUp.as_view()),
+    url(r'^api/activate/(?P<user_id>[0-9]+)/$', views.Activate.as_view(), name='activate'),
+    url(r'^api/resendotp/(?P<user_id>[0-9]+)/$',views.ResendOtp.as_view(), name='resend-otp'),
+    url(r'^api/login/$',views.LoginRequest.as_view()),
+
 ]
