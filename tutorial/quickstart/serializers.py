@@ -1,20 +1,21 @@
 #Serializers
 
 
-from django.contrib.auth.models import User,Group
+from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework.response import Response
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.hashers import make_password
 from .models import *
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
-
+        
 
 #--------------------------------------------------SignUp Form--------------------------------------------------#
 
-class UserSerializer(serializers.ModelSerializer):
-
+class SignUpSerializer(serializers.ModelSerializer):
+    
     username=serializers.CharField(
         required=True,
         style={'placeholder':'Username'}
@@ -35,14 +36,20 @@ class UserSerializer(serializers.ModelSerializer):
         required=True,
         style={'placeholder':'Phone Number'}
     )
-
+    
     class Meta:
         model=User
         fields=['url','username','first_name','last_name','email','phone_number','password']
+    
+    def validate(self,data):
+        email=data.get('email')
 
-    def create(self, validated_data):
-        validated_data['password'] = make_password(validated_data.get('password'))
-        return super(UserSerializer, self).create(validated_data)
+        try:
+            match= User.objects.get(email=email)
+        except User.DoesNotExist:
+            return data
+        
+        raise serializers.ValidationError('This email is already in use')
     
 #----------------------------------------------------------------------------------------------------------------#
 
@@ -58,7 +65,7 @@ class OTPSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.ModelSerializer):
     """
-    login serializer
+    serializer for login
     """
 
     uname_or_em = serializers.CharField(allow_null=False,required=True)
@@ -69,3 +76,8 @@ class LoginSerializer(serializers.ModelSerializer):
         model = User
         fields = ('uname_or_em','password')
 
+class GroupSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model=GroupModel
+        fields=['name','users','type']

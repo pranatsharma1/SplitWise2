@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'quickstart.apps.QuickstartConfig',
     'rest_pyotp',
 
-
 ]
 
 MIDDLEWARE = [

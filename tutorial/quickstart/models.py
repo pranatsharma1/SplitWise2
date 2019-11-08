@@ -10,7 +10,7 @@ from django.core import validators
 # Create your models here.
 class User(AbstractUser):
     username=models.CharField(max_length=200,unique=True)
-    email=models.EmailField(max_length=200,unique=True,help_text='Required')
+    email=models.EmailField(max_length=200,help_text='Required')
     first_name=models.CharField(max_length=200)
     last_name=models.CharField(max_length=200)
 
@@ -18,9 +18,9 @@ class User(AbstractUser):
     phone_number = models.CharField(validators=[phone_regex], max_length=17, blank=True)
 
      
-class Meta:
-    verbose_name =('user')
-    verbose_name_plural = ('users')
+    class Meta:
+        verbose_name =('User')
+        verbose_name_plural = ('Users')
     # abstract=True
 
     def __str__(self):
@@ -36,14 +36,45 @@ class OTP(models.Model):
     otp = models.IntegerField(null=False,blank=False)
     sent_on= models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name=('OTP')
+        verbose_name_plural=('OTPs')
+
     def __str__(self):
         return ("%s has received otps: %s" %(self.receiver.username,self.otp))
 
 
 
+class GroupModel(models.Model):
 
+    name=models.CharField(max_length=200)
+    users=models.ManyToManyField(User)
+    type_choices=[
+        ('APARTMENT','Apartment'),
+        ('HOUSE','House'),
+        ('TRIP','Trip'),
+    ]
+    type=models.CharField(max_length=200,choices=type_choices,default="Trip")
+    created_at=models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name=('Group')
+        verbose_name_plural=('Groups')
 
+    def __str__(self):
+        return self.name
+    
+class Expense(models.Model):
+
+    bill_name=models.CharField(max_length=200)
+    description=models.TextField(default=None)
+    group_name=models.ForeignKey(GroupModel,default=None,on_delete=models.CASCADE)
+    amount=models.DecimalField(default=0,max_digits=10,decimal_places=4)
+    payer=models.ForeignKey(User,on_delete=models.CASCADE)
+    created_at=models.DateTimeField(auto_now_add=True)
+   
+    def __str__(self):
+        return self.bill_name
 
 
 

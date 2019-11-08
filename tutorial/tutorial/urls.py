@@ -18,7 +18,8 @@ from django.urls import include,path
 from rest_framework import routers
 from quickstart import views
 from django.conf.urls import url
-from rest_framework_jwt.views import obtain_jwt_token
+# from rest_framework.authtoken import views
+from rest_framework_jwt.views import obtain_jwt_token,refresh_jwt_token,verify_jwt_token
 from django.contrib.auth import get_user_model
 from quickstart.views import LoginRequest
 User = get_user_model()
@@ -26,6 +27,7 @@ User = get_user_model()
 
 router=routers.DefaultRouter()
 router.register(r'users',views.ViewUser)
+# router.register(r'Groups',views.GroupViewSet,basename='Groups')
 # router.register(r'groups',views.GroupViewSet)
 # router.register(r'login',views.LoginRequest)
 
@@ -33,14 +35,18 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include(router.urls)),
     path('api-auth/',include('rest_framework.urls',namespace='rest_framework')),
-    path('token-auth/', obtain_jwt_token),
-    url(r'', include(('rest_pyotp.routers','pyotp'), namespace='rest-pyotp-urls')),
-    # url(r'signup/',views.SignUp.as_view()),
-    # url(r'activate/',views.Activate.as_view()),
-
-    url(r'^api/signup/$', views.SignUp.as_view()),
-    url(r'^api/activate/(?P<user_id>[0-9]+)/$', views.Activate.as_view(), name='activate'),
-    url(r'^api/resendotp/(?P<user_id>[0-9]+)/$',views.ResendOtp.as_view(), name='resend-otp'),
-    url(r'^api/login/$',views.LoginRequest.as_view()),
-
+    path('login/', obtain_jwt_token),
+    # path('custom-login/',views.CustomAuthToken.as_view()),
+    path('loginrequest/',views.LoginRequest.as_view()),
+    path('logout/',views.LoginRequest.as_view()),
+    path('token-refresh/', refresh_jwt_token),
+    path('token-verify/', verify_jwt_token),
+    url(r'^signup/$', views.SignUp.as_view()),
+    url(r'^validate/(?P<user_id>[0-9]+)/$', views.ValidateOtp.as_view(), name='validate-otp'),
+    url(r'^resendotp/(?P<user_id>[0-9]+)/$',views.ResendOtp.as_view(), name='resend-otp'),
+    url('create-group/',views.GroupViewSet.as_view(),name='Group')
 ]
+
+
+
+
