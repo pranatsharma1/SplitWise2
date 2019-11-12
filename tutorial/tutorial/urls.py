@@ -44,7 +44,10 @@ urlpatterns = [
     url(r'^signup/$', views.SignUp.as_view()),
     url(r'^validate/(?P<user_id>[0-9]+)/$', views.ValidateOtp.as_view(), name='validate-otp'),
     url(r'^resendotp/(?P<user_id>[0-9]+)/$',views.ResendOtp.as_view(), name='resend-otp'),
-    url('create-group/',views.GroupViewSet.as_view(),name='Group')
+    url(r'^profile/(?P<user_id>[0-9]+)/create-group/$',views.GroupViewSet.as_view(),name='Group'),
+    url(r'^profile/(?P<user_id>[0-9]+)/groups/(?P<group_id>[0-9]+)/create-expenses/',views.ExpenseView.as_view(),name='Expense'),
+    url(r'^profile/(?P<user_id>[0-9]+)/groups/$',views.GroupViewSet.as_view(),name='Group'),
+    url(r'^profile/(?P<user_id>[0-9]+)/groups/(?P<group_id>[0-9]+)/expenses/$',views.ExpenseViewSet.as_view(),name='Expenses')
 ]
 
 

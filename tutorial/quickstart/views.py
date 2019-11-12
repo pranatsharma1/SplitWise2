@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser
-from quickstart.serializers import SignUpSerializer,LoginSerializer,GroupSerializer
+from quickstart.serializers import SignUpSerializer,LoginSerializer,GroupSerializer,ExpenseSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import serializers
 from rest_framework.decorators import api_view
@@ -43,8 +43,7 @@ class SignUp(APIView):
     List all user, or create a new user.
     """
     serializer_class = SignUpSerializer
-    permission_classes = (permissions.AllowAny,)
-    authentication_classes = (TokenAuthentication,)
+  
 
     def post(self, request, *args, **kwargs):
 
@@ -57,8 +56,8 @@ class SignUp(APIView):
         first_name=serializer.validated_data['first_name']
         last_name=serializer.validated_data['last_name']
         phone_number=serializer.validated_data['phone_number']
-        
-        user = User.objects.create_user(username=username,email=email,password=password,first_name=first_name,last_name=last_name,phone_number=phone_number)
+        confirm_password=serializer.validated_data['confirm_password']
+        user = User.objects.create_user(username=username,email=email,password=password,confirm_password=confirm_password,first_name=first_name,last_name=last_name,phone_number=phone_number)
 
         otp = randint(999, 10000)
         data = OTP.objects.create(otp=otp,receiver=user)
@@ -187,6 +186,8 @@ class LoginRequest(APIView):
                                     status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
+#------------------------------------------View for logging the user out----------------------------------------#
+
 class Logout(APIView):
     """
     logout view.Only authenticated user can access this url(by default)
@@ -210,21 +211,22 @@ class Logout(APIView):
 #             'user_id': user.pk,
 #             'email': user.email
 #         })
+
 #-----------------------------------------------------------------------------------------------------------------#
 
 #--------------------------------------------View for list of users-----------------------------------------------#
 
 class ViewUser(viewsets.ModelViewSet):
     queryset=User.objects.all().order_by('-date_joined')
-    serializer_class = SignUpSerializer
+    serializer_class = UserSerializer
 
     def get(self,request,format=None):
         users = User.objects.all()
-        serializer = SignUpSerializer(users, many=True)
+        serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = SignUpSerializer(data=request.data)
+        # serializer = UserSerializer(data=request.data,many=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -232,23 +234,58 @@ class ViewUser(viewsets.ModelViewSet):
 
 #-------------------------------------------------------------------------------------------------------------#
 
+#---------------------------------------View for creating a Group---------------------------------------------#
+
 class GroupViewSet(APIView):
     serializer_class=GroupSerializer
     queryset=GroupModel.objects.all()
 
-    def get(self,request,format=None):
-        group = GroupModel.objects.all()
+    def get(self,request,user_id,*args,**kwargs):
+        user=User.objects.get(id=user_id)
+        group = GroupModel.objects.filter(users=user)
         serializer = GroupSerializer(group, many=True)
         return Response(serializer.data)
 
-    def post(self,request,format=None):
+    def post(self,request,user_id,*args,**kwargs):
+        group = GroupModel.objects.all()
         serializer = GroupSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         name= serializer.validated_data['name']
         type=serializer.validated_data['type']
-        # created_at=serializer.validated_data['created_at']
+        list=serializer.validated_data['users']
+        print(list)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
 
+        return response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+#----------------------------------------------------------------------------------------------------------------#
+
+
+#-------------------------------------------View for creating an expense-----------------------------------------#
+
+class ExpenseView(APIView):
+    serializer_class=ExpenseSerializer
+    queryset=Expense.objects.all()
+
+    def get(self,request,user_id,group_id,format=None):
+        expense = Expense.objects.all()
+        serializer = GroupSerializer(expense, many=True)
+        return Response(serializer.data)
+
+    def post(self,request,user_id,group_id,format=None):
+        serializer = ExpenseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        bill_name= serializer.validated_data['bill_name']
+        description=serializer.validated_data['description']
+        group_name= serializer.validated_data['group_name']
+        amount= serializer.validated_data['amount']
+        payer= serializer.validated_data['payer']
+        # created_at=serializer.validated_data['created_at']
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
@@ -260,7 +297,46 @@ class GroupViewSet(APIView):
 
 
 
+#---------------------------------------View for looking at an Expense---------------------------------------------#
 
+class ExpenseViewSet(APIView):
+    serializer_class=ExpenseSerializer
+    queryset=Expense.objects.all()
+    
+    def get(self,request,user_id,group_id,*args,**kwargs):
+        
+        user=User.objects.get(id=user_id)
+        group=GroupModel.objects.get(id=group_id)
+        
+        print(group)
+        # expense_object=Expense.objects.all()
+        expense1 = Expense.objects.filter(group_name__name=group.name)
+        expense2= Expense.objects.filter(group_name__users=user)
+        expense=expense1 & expense2
+        
+        # print(group_name)
+
+        serializer = ExpenseSerializer(expense, many=True)
+        return Response(serializer.data)
+
+    def post(self,request,user_id,*args,**kwargs):
+        expense = Expense.objects.all()
+        serializer = ExpenseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        bill_name= serializer.validated_data['bill_name']
+        description=serializer.validated_data['description']
+        group_name= serializer.validated_data['group_name']
+        amount= serializer.validated_data['amount']
+        payer= serializer.validated_data['payer']
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+        return response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+#----------------------------------------------------------------------------------------------------------------#
 
 
 

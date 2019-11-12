@@ -13,10 +13,12 @@ class User(AbstractUser):
     email=models.EmailField(max_length=200,help_text='Required')
     first_name=models.CharField(max_length=200)
     last_name=models.CharField(max_length=200)
-
-    phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
-    phone_number = models.CharField(validators=[phone_regex], max_length=17, blank=True)
-
+    password=models.CharField(max_length=100,default=None,null=True)
+    confirm_password=models.CharField(max_length=100,default=None,null=True)
+    # phone_regex = RegexValidator(regex=r'^\+?1?\d{10,10}$', message="Phone number must be entered in the format: '9999999999'. Up to 10 digits allowed.")
+    phone_number = models.CharField(max_length=10,blank=False)
+    
+    
      
     class Meta:
         verbose_name =('User')
@@ -44,25 +46,36 @@ class OTP(models.Model):
         return ("%s has received otps: %s" %(self.receiver.username,self.otp))
 
 
+class Friend(models.Model):
+    user=models.OneToOneField(User,on_delete=models.CASCADE,related_name='friends_list')
+    friends=models.ManyToManyField(User)
+
+    def __str__(self):
+        return "Friend List of %s"%(self.user.username)
+
+
+
 
 class GroupModel(models.Model):
 
     name=models.CharField(max_length=200)
-    users=models.ManyToManyField(User)
+    users=models.ManyToManyField(User,related_name='group_members')
     type_choices=[
         ('APARTMENT','Apartment'),
         ('HOUSE','House'),
         ('TRIP','Trip'),
+        ('OTHER','Other'),
     ]
     type=models.CharField(max_length=200,choices=type_choices,default="Trip")
+    # created_by=models.ForeignKey(User,default=None,on_delete=models.CASCADE,related_name="admin")
     created_at=models.DateTimeField(auto_now_add=True)
-
+    admin=models.ForeignKey(User,default=None,on_delete=models.CASCADE,related_name='admin')
     class Meta:
         verbose_name=('Group')
         verbose_name_plural=('Groups')
 
-    def __str__(self):
-        return self.name
+    # def __str__(self):
+    #     return self.name
     
 class Expense(models.Model):
 
@@ -72,9 +85,9 @@ class Expense(models.Model):
     amount=models.DecimalField(default=0,max_digits=10,decimal_places=4)
     payer=models.ForeignKey(User,on_delete=models.CASCADE)
     created_at=models.DateTimeField(auto_now_add=True)
-   
+    
     def __str__(self):
-        return self.bill_name
+        return "%s in : %s "%(self.bill_name,self.group_name.name)
 
 
 
