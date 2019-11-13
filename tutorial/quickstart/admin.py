@@ -21,7 +21,15 @@ class OTPAdmin(admin.ModelAdmin):
     fieldsets=[
         ("OTP",{"fields":["otp",] })
     ]
+
+class StatusAdmin(admin.ModelAdmin):
+    feildsets=[
+        ("Name of Ower",{"fields":["ower"] }),
+        ("Name of Lender",{"fields":["lender"] }),
+        ("Amount",{"fields":["amount"] })
+    ]    
 admin.site.register(User,UserAdmin)
 admin.site.register(OTP,OTPAdmin)
 admin.site.register(GroupModel,GroupAdmin)
 admin.site.register(Expense)
+admin.site.register(Status,StatusAdmin)

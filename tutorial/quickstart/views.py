@@ -36,6 +36,28 @@ from random import *
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
+
+#--------------------------------------------View for list of users-----------------------------------------------#
+
+class ViewUser(viewsets.ModelViewSet):
+
+    queryset=User.objects.all().order_by('-date_joined')      #Displaying objects in order of date joined
+    serializer_class = UserSerializer                         
+
+    def get(self,request,format=None):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#-------------------------------------------------------------------------------------------------------------#
+
 #--------------------------------------Signup View to Create a New User----------------------------------------#
 
 class SignUp(APIView):
@@ -50,6 +72,7 @@ class SignUp(APIView):
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
+        #fetching the data from serializer
         email = serializer.validated_data['email']
         username = serializer.validated_data['username']
         password = serializer.validated_data['password']
@@ -57,21 +80,43 @@ class SignUp(APIView):
         last_name=serializer.validated_data['last_name']
         phone_number=serializer.validated_data['phone_number']
         confirm_password=serializer.validated_data['confirm_password']
+
+        #creating the user
         user = User.objects.create_user(username=username,email=email,password=password,confirm_password=confirm_password,first_name=first_name,last_name=last_name,phone_number=phone_number)
 
-        otp = randint(999, 10000)
+        # generating the otp and sending the email
+
+        otp = randint(999, 10000)               #generating the 4 digit OTP
         data = OTP.objects.create(otp=otp,receiver=user)
         data.save()
-        user.is_active = False
+
+        user.is_active = False                  # Abhi ke liye user ko inactive kar diya hai
         user.save()
+        
         subject = 'Activate Your SplitItGo Account'
         message = render_to_string('account_activate.html', {
             'user': user,
             'OTP': otp,
-         })
+        })
         from_mail = EMAIL_HOST_USER
         to_mail = [user.email]
         send_mail(subject, message, from_mail, to_mail, fail_silently=False)
+        
+        # subject = 'Activate Your SplitItGo Account'         # Email ka title hai ye
+        # message = render_to_string
+        # (   'account_activate.html',                        #  Template's name
+        #   { 
+        #     'user': user,                                   # details of user(jisko hum email bhej rahe hain) like username etc.
+        #     'OTP': otp,                                     # OTP
+        #   }
+        # )
+        
+        # from_mail = EMAIL_HOST_USER                        # Wo email address jisse email send ho raha hai
+        # to_mail = [user.email]                             # Wo email address jisko email send kar rhe hain
+
+        # Sending the email now
+        send_mail(subject, message, from_mail, to_mail, fail_silently=False)
+
         return Response({'details': username+',Please verify your OTP sent to your Email-id to complete registration.',
                                 'user_id': user.id })
 
@@ -214,26 +259,6 @@ class Logout(APIView):
 
 #-----------------------------------------------------------------------------------------------------------------#
 
-#--------------------------------------------View for list of users-----------------------------------------------#
-
-class ViewUser(viewsets.ModelViewSet):
-    queryset=User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
-
-    def get(self,request,format=None):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, format=None):
-        # serializer = UserSerializer(data=request.data,many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#-------------------------------------------------------------------------------------------------------------#
-
 #---------------------------------------View for creating a Group---------------------------------------------#
 
 class GroupViewSet(APIView):
@@ -270,10 +295,20 @@ class GroupViewSet(APIView):
 class ExpenseView(APIView):
     serializer_class=ExpenseSerializer
     queryset=Expense.objects.all()
-
+    
+    
     def get(self,request,user_id,group_id,format=None):
-        expense = Expense.objects.all()
-        serializer = GroupSerializer(expense, many=True)
+        user=User.objects.get(id=user_id)
+        group=GroupModel.objects.get(id=group_id)
+        
+        print(group)
+        # expense_object=Expense.objects.all()
+        expense1 = Expense.objects.filter(group_name__name=group.name)
+        expense2= Expense.objects.filter(group_name__users=user)
+        expense=expense1 & expense2
+        
+        serializer = ExpenseSerializer(expense, many=True)
+        
         return Response(serializer.data)
 
     def post(self,request,user_id,group_id,format=None):
@@ -293,7 +328,7 @@ class ExpenseView(APIView):
         return response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
-
+#------------------------------------------------------------------------------------------------------------------#
 
 
 

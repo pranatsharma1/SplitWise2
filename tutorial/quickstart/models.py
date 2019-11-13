@@ -91,8 +91,19 @@ class Expense(models.Model):
 
 
 
+class Status(models.Model):
+    ower=models.ForeignKey(User,default=None,on_delete=models.CASCADE,related_name='Ower')
+    lender=models.ForeignKey(User,default=None,on_delete=models.CASCADE,related_name='Lender')
+    amount=models.DecimalField(default=None,max_digits=10,decimal_places=4)
+    
+    class Meta:
+        verbose_name=("Status")
+        verbose_name_plural=("Status")
 
+    def __str__(self):
+        return "%s has lended %s to %s" %(self.ower,self.lender,self.amount)   
 
+    
 
 # from django import forms
 # from django.core.exceptions import ValidationError
