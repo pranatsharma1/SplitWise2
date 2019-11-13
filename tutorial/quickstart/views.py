@@ -243,19 +243,15 @@ class Logout(APIView):
                         status=status.HTTP_200_OK)
 
 
-# class CustomAuthToken(ObtainAuthToken):
+class CustomAuthToken(ObtainAuthToken):
 
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.serializer_class(data=request.data,
-#                                            context={'request': request})
-#         serializer.is_valid(raise_exception=True)
-#         user = serializer.validated_data['user']
-#         token, created = Token.objects.get_or_create(user=user)
-#         return Response({
-#             'token': token.key,
-#             'user_id': user.pk,
-#             'email': user.email
-#         })
+    def post(self, request, *args, **kwargs):
+        response=super(CustomAuthToken,self).post(request,*args,**kwargs)
+        token = Token.objects.get(key=response.data['token'])
+        return Response({
+            'token': token.key,
+            'id': token.user_id,
+        })
 
 #-----------------------------------------------------------------------------------------------------------------#
 
@@ -273,18 +269,23 @@ class GroupViewSet(APIView):
 
     def post(self,request,user_id,*args,**kwargs):
         group = GroupModel.objects.all()
-        serializer = GroupSerializer(data=request.data)
+        # print(group.id)
+        serializer = GroupSerializer(data=request.data,context={'request': request})
         serializer.is_valid(raise_exception=True)
 
         name= serializer.validated_data['name']
         type=serializer.validated_data['type']
         list=serializer.validated_data['users']
-        print(list)
         
+        group=GroupModel.objects.all()
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
-
+            temp=serializer.save()
+            # print(group.id)
+            print(temp.id)
+            # return Response(serializer.data,status=status.HTTP_201_CREATED)
+            return Response({'details': 'Group has been successfully created',
+                                'group_id': temp.id},status=status.HTTP_201_CREATED)
+            # return Response(temp.id)                    
         return response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 #----------------------------------------------------------------------------------------------------------------#

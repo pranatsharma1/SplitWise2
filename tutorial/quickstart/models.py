@@ -57,7 +57,8 @@ class Friend(models.Model):
 
 
 class GroupModel(models.Model):
-
+    
+    id=models.AutoField(primary_key=True)
     name=models.CharField(max_length=200)
     users=models.ManyToManyField(User,related_name='group_members')
     type_choices=[

@@ -36,7 +36,7 @@ urlpatterns = [
     path('',include(router.urls)),
     path('api-auth/',include('rest_framework.urls',namespace='rest_framework')),
     path('login/', obtain_jwt_token),
-    # path('custom-login/',views.CustomAuthToken.as_view()),
+    path('custom-login/',views.CustomAuthToken.as_view()),
     path('loginrequest/',views.LoginRequest.as_view()),
     path('logout/',views.LoginRequest.as_view()),
     path('token-refresh/', refresh_jwt_token),
