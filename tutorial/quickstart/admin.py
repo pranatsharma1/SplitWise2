@@ -14,6 +14,7 @@ class UserAdmin(admin.ModelAdmin):
 class GroupAdmin(admin.ModelAdmin):
     fieldsets=[
         ("Group Name",{"fields":["name",] }),
+        ("Group Admin",{"fields":["admin",] }),
         ("Group Members",{"fields":["users",] }),
         ("Type Of Group",{"fields":["type",] }),
     ]

@@ -4,6 +4,7 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.parsers import JSONParser
 from quickstart.serializers import SignUpSerializer,LoginSerializer,GroupSerializer,ExpenseSerializer
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import serializers
 from rest_framework.decorators import api_view
@@ -12,6 +13,7 @@ from rest_framework import status,permissions
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import BasePermission, IsAuthenticated
 
 from .permissions import *
 from django.db.models import Q
@@ -258,16 +260,24 @@ class CustomAuthToken(ObtainAuthToken):
 #---------------------------------------View for creating a Group---------------------------------------------#
 
 class GroupViewSet(APIView):
-    serializer_class=GroupSerializer
+
+    permission_classes = [IsAuthenticated]                   #token-authentication
+    serializer_class=GroupSerializer                  
     queryset=GroupModel.objects.all()
 
-    def get(self,request,user_id,*args,**kwargs):
-        user=User.objects.get(id=user_id)
-        group = GroupModel.objects.filter(users=user)
+    def get(self,request,*args,**kwargs):
+        user=self.request.user
+        # print(user)
+        group = GroupModel.objects.filter(users=user).order_by('-id')             #ordering the groups in descending order of id
+        # print(group.group.id)
         serializer = GroupSerializer(group, many=True)
+
+        # return Response({'details': serializer.data,
+        #                         'group_id': group.id})
+        # print(serializer.id)
         return Response(serializer.data)
 
-    def post(self,request,user_id,*args,**kwargs):
+    def post(self,request,*args,**kwargs):
         group = GroupModel.objects.all()
         # print(group.id)
         serializer = GroupSerializer(data=request.data,context={'request': request})
@@ -294,25 +304,24 @@ class GroupViewSet(APIView):
 #-------------------------------------------View for creating an expense-----------------------------------------#
 
 class ExpenseView(APIView):
+    permission_classes = [IsAuthenticated]                   #token-authentication
     serializer_class=ExpenseSerializer
     queryset=Expense.objects.all()
     
     
-    def get(self,request,user_id,group_id,format=None):
-        user=User.objects.get(id=user_id)
+    def get(self,request,group_id,format=None):
+        user=self.request.user
         group=GroupModel.objects.get(id=group_id)
         
-        print(group)
-        # expense_object=Expense.objects.all()
-        expense1 = Expense.objects.filter(group_name__name=group.name)
-        expense2= Expense.objects.filter(group_name__users=user)
+        expense1 = Expense.objects.filter(group_name__name=group.name).order_by('-id')            #ordering the objects in order of id
+        expense2= Expense.objects.filter(group_name__users=user).order_by('-id')                  #ordering the objects in order of id
         expense=expense1 & expense2
         
         serializer = ExpenseSerializer(expense, many=True)
         
         return Response(serializer.data)
 
-    def post(self,request,user_id,group_id,format=None):
+    def post(self,request,group_id,format=None):
         serializer = ExpenseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -323,7 +332,8 @@ class ExpenseView(APIView):
         payer= serializer.validated_data['payer']
         # created_at=serializer.validated_data['created_at']
         if serializer.is_valid():
-            serializer.save()
+            temp=serializer.save()
+            print(amount/temp.group_name.users.count())
             return Response(serializer.data,status=status.HTTP_201_CREATED)
 
         return response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
@@ -336,18 +346,19 @@ class ExpenseView(APIView):
 #---------------------------------------View for looking at an Expense---------------------------------------------#
 
 class ExpenseViewSet(APIView):
+    permission_classes=[IsAuthenticated]
     serializer_class=ExpenseSerializer
     queryset=Expense.objects.all()
     
-    def get(self,request,user_id,group_id,*args,**kwargs):
+    def get(self,request,group_id,*args,**kwargs):
         
-        user=User.objects.get(id=user_id)
+        user=self.request.user
         group=GroupModel.objects.get(id=group_id)
         
-        print(group)
+        # print(group)
         # expense_object=Expense.objects.all()
-        expense1 = Expense.objects.filter(group_name__name=group.name)
-        expense2= Expense.objects.filter(group_name__users=user)
+        expense1 = Expense.objects.filter(group_name__name=group.name).order_by('-id') # For descending
+        expense2= Expense.objects.filter(group_name__users=user).order_by('-id')       #For Descending
         expense=expense1 & expense2
         
         # print(group_name)
@@ -355,7 +366,7 @@ class ExpenseViewSet(APIView):
         serializer = ExpenseSerializer(expense, many=True)
         return Response(serializer.data)
 
-    def post(self,request,user_id,*args,**kwargs):
+    def post(self,request,*args,**kwargs):
         expense = Expense.objects.all()
         serializer = ExpenseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -367,7 +378,8 @@ class ExpenseViewSet(APIView):
         payer= serializer.validated_data['payer']
 
         if serializer.is_valid():
-            serializer.save()
+            temp=serializer.save()
+            print(amount/temp.group_name.users.count())
             return Response(serializer.data,status=status.HTTP_201_CREATED)
 
         return response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
@@ -382,18 +394,109 @@ class ExpenseViewSet(APIView):
 
 
 
+class ManageUserView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = EditProfileSerializer
+
+    def get_object(self):
+        return self.request.user
+
+
+class Pay(APIView):
+    permission_classes=[IsAuthenticated]
+    serializer_class=PaySerializer
+
+    def post(self,request,taker_id,*args,**kwargs):
+        serializer = PaySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        giver=serializer.validated_data['giver']
+        taker=serializer.validated_data['taker']
+        amount= serializer.validated_data['amount']
+
+
+        # giver=request.user
+        # taker=User.objects.get(id=taker_id)
+
+        print("Giver = "+ giver.username)
+        print("Taker = "+taker.username)
+        print("Amount = "+str(amount))
+
+        try:
+            status1=Status.objects.get(giver=giver,taker=taker)
+            print(status1)
+        except Status.DoesNotExist:
+            status1=Status.objects.create(giver=giver,taker=taker,amount=0)    
+
+        status1.amount+=amount
+        status1.save()
+        print(status1)
+
+        
+        
+        if serializer.is_valid():
+            # serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
 
 
 
+class CurrentStatus(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self,request,taker_id,*args,**kwargs):
+        
+        taker=User.objects.get(id=taker_id)
+        user=request.user
 
+        try:
+            status1=Status.objects.get(giver=taker,taker=user)
+            print(status1)
+        except Status.DoesNotExist:
+            status1=Status.objects.create(giver=taker,taker=user,amount=0)
+        print(status1.amount)
+        try:
+            status2=Status.objects.get(giver=user,taker=taker)
+            print(status2)
+        except Status.DoesNotExist:
+            status2=Status.objects.create(giver=user,taker=taker,amount=0)
+        print(status2.amount)
+        
+        temp1=status1.amount-status2.amount
+        temp2=status2.amount-status1.amount
 
+        print("Amount given by "+status1.giver.username+" to "+status1.taker.username+" is "+str(temp1))
+        print("Amount given by "+status2.giver.username+" to "+status2.taker.username+" is "+str(temp2))
+       
+        if (status1.amount-status2.amount>0):
+            return Response({'message': 'You owe '+str(temp1) + ' to ' + status1.giver.username })
 
+        elif (status1.amount-status2.amount<0):
+            return Response({'message': 'You are owed ' +str(temp2) +' from '+status1.giver.username})
 
+        else:
+            return Response("All balances are settled up")
 
+class AddFriend(APIView):
+    
+    permission_classes=[IsAuthenticated]
+    serializer_class=FriendSerializer
 
+    def get(self,request,*args,**kwargs):
+        user=self.request.user
+        print(user)
+        friendlist=Friend.objects.get(friends=user)
+        print(friendlist)
 
+    def post(self,request,friend_id,*args,**kwargs):
+        # user=self.request.user
+        # print(user)
+        friendlist=Friend.objects.get(user.id=self.request.user)
+        print(friendlist)
+        friendlist.friends.add(friend_id)
+
+        return Response("User has been added to the friend list")
 
 
 
@@ -429,7 +532,6 @@ class ExpenseViewSet(APIView):
 #             'email': user.email
 #         })
 #         # return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
 
 
