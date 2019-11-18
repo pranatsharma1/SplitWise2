@@ -486,17 +486,38 @@ class AddFriend(APIView):
     def get(self,request,*args,**kwargs):
         user=self.request.user
         print(user)
-        friendlist=Friend.objects.get(friends=user)
-        print(friendlist)
+        # friendlist=Friend.objects.get(user=user)
+        # print(friendlist)
+        
+        try:
+            friendlist=Friend.objects.get(user=user)
+        except Friend.DoesNotExist:
+            friendlist=Friend.objects.create(user=user)
+
+        for i in friendlist.friends.all():
+                print (i.username)
+        return ("done")
+        # return Response({'message':"Friendlist of "+user.username+" is "for i in friendlist.friends.all(): print(i.username))    
+
 
     def post(self,request,friend_id,*args,**kwargs):
-        # user=self.request.user
-        # print(user)
-        friendlist=Friend.objects.get(user.id=self.request.user)
-        print(friendlist)
-        friendlist.friends.add(friend_id)
-
-        return Response("User has been added to the friend list")
+        user=self.request.user
+        print(user)
+        # friendlist=Friend.objects.get(user.id=self.request.user)
+        # print(friendlist)
+        # friendlist.friends.add(friend_id)
+        
+        try:
+            friendlist=Friend.objects.get(user=user)
+            # print(status2)
+        except Friend.DoesNotExist:
+            friendlist=Friend.objects.create(user=user)
+        
+        friendlist.friends.add(friend_id)    
+        print(friendlist.friends.get(id=friend_id))
+        # print(status2.amount)
+        
+        return Response({'message':friendlist.friends.get(id=friend_id).username+' has been added to the friend list'})
 
 
 
