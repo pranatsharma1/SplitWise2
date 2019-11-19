@@ -12,6 +12,7 @@ from .models import *
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
+#------------------------------------------------------------------------------------------------------------------------#
         
 class UserSerializer(serializers.ModelSerializer):
     
@@ -70,9 +71,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields=['url','username','first_name','last_name','email','phone_number','password','confirm_password']
 
 
+#------------------------------------------------------------------------------------------------------------------------#
 
 
-#--------------------------------------------------SignUp Form--------------------------------------------------#
+#------------------------------------------------------SignUp Form-------------------------------------------------------#
 
 class SignUpSerializer(serializers.ModelSerializer):
     
@@ -164,9 +166,10 @@ class SignUpSerializer(serializers.ModelSerializer):
         else:
             return data
     
-#----------------------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------#
 
-#--------------------------------------------------Serializer for OTP--------------------------------------------#
+
+#--------------------------------------------------Serializer for OTP----------------------------------------------------#
 class OTPSerializer(serializers.ModelSerializer):
     """
     serializer for otp
@@ -176,7 +179,10 @@ class OTPSerializer(serializers.ModelSerializer):
         model = OTP
         fields = ['otp']
 
-#-------------------------------------------------Serializer for Login------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------#
+
+
+#-------------------------------------------------Serializer for Login---------------------------------------------------#
 class LoginSerializer(serializers.ModelSerializer):
     """
     serializer for login
@@ -191,7 +197,10 @@ class LoginSerializer(serializers.ModelSerializer):
         fields = ('uname_or_em','password')
 
 
-#-----------------------------------------Serializer for Group Creation------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------#
+
+
+#--------------------------------------------Serializer for Creating a Group--------------------------------------------#
 
 class GroupSerializer(serializers.ModelSerializer):
 
@@ -200,8 +209,10 @@ class GroupSerializer(serializers.ModelSerializer):
         # fields=['id','name','admin','users','type']
         fields='__all__'
         read_only_fields = ('id','created_at')
+#------------------------------------------------------------------------------------------------------------------------#
 
-#----------------------------------------Serializer for Expense--------------------------------------------#
+
+#---------------------------------------------Serializer for Adding Expense----------------------------------------------#
 
 class ExpenseSerializer(serializers.ModelSerializer):
 
@@ -210,9 +221,10 @@ class ExpenseSerializer(serializers.ModelSerializer):
         # fields=['bill_name','description','group_name','amount','payer',]        
         fields='__all__'
 
+#------------------------------------------------------------------------------------------------------------------------#
 
 
-        #--------------------------------------------------Edit Profile Form--------------------------------------------------#
+#-------------------------------------------------Edit Profile Form------------------------------------------------------#
 
 class EditProfileSerializer(serializers.ModelSerializer):
     
@@ -304,7 +316,11 @@ class EditProfileSerializer(serializers.ModelSerializer):
         else:
             return data
     
-#----------------------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------#
+
+
+#-----------------------------------------Serializer for One to One Payment----------------------------------------------#
+
 
 class PaySerializer(serializers.ModelSerializer):
 
@@ -312,8 +328,15 @@ class PaySerializer(serializers.ModelSerializer):
         model=Status
         fields=['taker','giver','amount']   
 
-class FriendSerializer(serializers.ModelSerializer):
+#------------------------------------------------------------------------------------------------------------------------#
 
-    class Meta:
-        model=Friend
-        fields='__all__'
+
+#-------------------------------------Serializer for Adding Friend to the Friendlist-------------------------------------#
+
+# class FriendSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model=Friend
+#         fields='__all__'
+
+#------------------------------------------------------------------------------------------------------------------------#        

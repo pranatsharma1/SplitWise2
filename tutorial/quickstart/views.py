@@ -39,7 +39,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-#--------------------------------------------View for list of users-----------------------------------------------#
+#-----------------------------------------------View for list of users---------------------------------------------------#
 
 class ViewUser(viewsets.ModelViewSet):
 
@@ -58,9 +58,10 @@ class ViewUser(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-#-------------------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------#
 
-#--------------------------------------Signup View to Create a New User----------------------------------------#
+
+#--------------------------------------------Signup View to Create a New User--------------------------------------------#
 
 class SignUp(APIView):
     """
@@ -122,9 +123,10 @@ class SignUp(APIView):
         return Response({'details': username+',Please verify your OTP sent to your Email-id to complete registration.',
                                 'user_id': user.id })
 
-#-----------------------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------#
 
-#-----------------------------------View for verifying the OTP sent to the user-------------------------------#
+
+#------------------------------------------View for verifying the OTP sent to the user-----------------------------------#
 
 class ValidateOtp(APIView):
    
@@ -162,9 +164,10 @@ class ValidateOtp(APIView):
         else:
             return Response({'message':'Invalid OTP',},status = status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
 
-#----------------------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------#
 
-#------------------------------------------View for Resending the OTP--------------------------------------------#
+
+#-----------------------------------------------View for Resending the OTP-----------------------------------------------#
 
 class ResendOtp(generics.CreateAPIView):
    
@@ -197,9 +200,9 @@ class ResendOtp(generics.CreateAPIView):
                          'user_id': user_id },
                         status=status.HTTP_201_CREATED)
 
-#----------------------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------#
 
-#---------------------------------------View for Login the User--------------------------------------------------#
+#-----------------------------------------------View for Login the User--------------------------------------------------#
 
 class LoginRequest(APIView):
     """
@@ -232,8 +235,10 @@ class LoginRequest(APIView):
                 return Response({'error':'Please! varify Your Email First','user_id':user.id},
                                     status=status.HTTP_406_NOT_ACCEPTABLE)
 
+#------------------------------------------------------------------------------------------------------------------------#
 
-#------------------------------------------View for logging the user out----------------------------------------#
+
+#----------------------------------------------View for logging the user out---------------------------------------------#
 
 class Logout(APIView):
     """
@@ -255,9 +260,10 @@ class CustomAuthToken(ObtainAuthToken):
             'id': token.user_id,
         })
 
-#-----------------------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------------------------------#
 
-#---------------------------------------View for creating a Group---------------------------------------------#
+
+#--------------------------------------------------View for creating a Group---------------------------------------------#
 
 class GroupViewSet(APIView):
 
@@ -331,16 +337,44 @@ class ExpenseView(APIView):
         amount= serializer.validated_data['amount']
         payer= serializer.validated_data['payer']
         # created_at=serializer.validated_data['created_at']
+        # for i in group_name.:
+        # for i in group_name.users.all():
+        #     print (i.id)
+        #     giver=request.user
+        #     taker=User.objects.get(id=i.id)
+        #     try:
+        #        status1=Status.objects.get(giver=giver,taker=taker)
+        #        print(status1)
+        #     except Status.DoesNotExist:
+        #        status1=Status.objects.create(giver=giver,taker=taker,amount=0)    
+
+        #     status1.amount+=amount/temp.group_name.users.count()
+        #     status1.save()
+
+        print(group_name.users.all())
+        
+        # print(group_name.users.username)
         if serializer.is_valid():
             temp=serializer.save()
             print(amount/temp.group_name.users.count())
+            for i in group_name.users.all():
+                print (i.id)
+                giver=request.user
+                taker=User.objects.get(id=i.id)
+                try:
+                  status1=Status.objects.get(giver=giver,taker=taker)
+                  print(status1)
+                except Status.DoesNotExist:
+                  status1=Status.objects.create(giver=giver,taker=taker,amount=0)    
+
+                status1.amount+=amount/temp.group_name.users.count()
+                status1.save()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
 
-        return response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
 #------------------------------------------------------------------------------------------------------------------#
-
 
 
 #---------------------------------------View for looking at an Expense---------------------------------------------#
@@ -380,6 +414,9 @@ class ExpenseViewSet(APIView):
         if serializer.is_valid():
             temp=serializer.save()
             print(amount/temp.group_name.users.count())
+            
+
+
             return Response(serializer.data,status=status.HTTP_201_CREATED)
 
         return response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
@@ -387,12 +424,7 @@ class ExpenseViewSet(APIView):
 #----------------------------------------------------------------------------------------------------------------#
 
 
-
-
-
-
-
-
+#-----------------------------------------------Edit Profile View---------------------------------------------------3-----#
 
 class ManageUserView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = EditProfileSerializer
@@ -400,6 +432,10 @@ class ManageUserView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         return self.request.user
 
+#-------------------------------------------------------------------------------------------------------------------------#
+
+
+#---------------------------------------View for settling up with other user----------------------------------------------#
 
 class Pay(APIView):
     permission_classes=[IsAuthenticated]
@@ -439,9 +475,9 @@ class Pay(APIView):
 
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
+#------------------------------------------------------------------------------------------------------------------------#
 
-
-
+#--------------------------------------------View for showing the current status-----------------------------------------#
 
 class CurrentStatus(APIView):
     permission_classes=[IsAuthenticated]
@@ -478,16 +514,16 @@ class CurrentStatus(APIView):
         else:
             return Response("All balances are settled up")
 
+#----------------------------------------------------------------------------------------------------------------------#
+
+#----------------------------------------Adding Friends to the Friendlist----------------------------------------------#
 class AddFriend(APIView):
     
     permission_classes=[IsAuthenticated]
-    serializer_class=FriendSerializer
 
     def get(self,request,*args,**kwargs):
         user=self.request.user
         print(user)
-        # friendlist=Friend.objects.get(user=user)
-        # print(friendlist)
         
         try:
             friendlist=Friend.objects.get(user=user)
@@ -496,68 +532,44 @@ class AddFriend(APIView):
 
         for i in friendlist.friends.all():
                 print (i.username)
-        return ("done")
+        return Response("done")
         # return Response({'message':"Friendlist of "+user.username+" is "for i in friendlist.friends.all(): print(i.username))    
 
 
     def post(self,request,friend_id,*args,**kwargs):
         user=self.request.user
         print(user)
-        # friendlist=Friend.objects.get(user.id=self.request.user)
-        # print(friendlist)
-        # friendlist.friends.add(friend_id)
         
         try:
             friendlist=Friend.objects.get(user=user)
-            # print(status2)
         except Friend.DoesNotExist:
             friendlist=Friend.objects.create(user=user)
         
         friendlist.friends.add(friend_id)    
         print(friendlist.friends.get(id=friend_id))
-        # print(status2.amount)
         
         return Response({'message':friendlist.friends.get(id=friend_id).username+' has been added to the friend list'})
 
+#-----------------------------------------------------------------------------------------------------------------------#
 
 
+#-----------------------------------------View For returning the username-----------------------------------------------#
 
+class GetUsername(APIView):
+       permission_classes=[IsAuthenticated]
 
+       def get(self,request,user_id,*args,**kwargs):
 
+           user=User.objects.get(id=user_id)
 
+           return Response({'username':user.username})
 
+class GetEmail(APIView):
+       permission_classes=[IsAuthenticated]
 
+       def get(self,request,user_id,*args,**kwargs):
 
+           user=User.objects.get(id=user_id)
 
-
-
-
-# class Login(APIView):
-    
-#     serializer_class = LoginSerializer
-#     authentication_classes = (TokenAuthentication,)
-
-#     # def get(self,request,format=None):
-#     #     users = User.objects.all()
-#     #     serializer = LoginSerializer(users, many=True)
-#     #     return Response(serializer.data)
-
-#     def post(self, request):
-#         serializer = LoginSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         user = serializer.validated_data['uname_or_em']
-#         token, created = Token.objects.get_or_create(user=user)
-#         return Response({
-#             'token': token.key,
-#             'user_id': user.pk,
-#             'email': user.email
-#         })
-#         # return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-
-
-
-
-
+           return Response({'email':user.email})
 

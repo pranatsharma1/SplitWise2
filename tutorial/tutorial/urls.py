@@ -52,7 +52,9 @@ urlpatterns = [
     url(r'^profile/(?P<taker_id>[0-9]+)/pay/$',views.Pay.as_view(),name='pay'),
     url(r'^profile/friendlist/$',views.AddFriend.as_view(),name='FriendList'),
     url(r'^profile/add_friend/(?P<friend_id>[0-9]+)/$',views.AddFriend.as_view(),name='AddFriend'),
-    url(r'profile/current_status/(?P<taker_id>[0-9]+)/',views.CurrentStatus.as_view(),name='Current_Status')
+    url(r'profile/current_status/(?P<taker_id>[0-9]+)/',views.CurrentStatus.as_view(),name='Current_Status'),
+    url(r'^profile/get_username/(?P<user_id>[0-9]+)/',views.GetUsername.as_view(),name='Get_Username'),
+    url(r'^profile/get_email/(?P<user_id>[0-9]+)/',views.GetEmail.as_view(),name='Get_Email')
 ]
 
 
