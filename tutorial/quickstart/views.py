@@ -524,15 +524,15 @@ class AddFriend(APIView):
     def get(self,request,*args,**kwargs):
         user=self.request.user
         print(user)
-        
+        list=[]
         try:
             friendlist=Friend.objects.get(user=user)
         except Friend.DoesNotExist:
             friendlist=Friend.objects.create(user=user)
 
         for i in friendlist.friends.all():
-                print (i.username)
-        return Response("done")
+                list.append(i.id)
+        return Response({'message':list})
         # return Response({'message':"Friendlist of "+user.username+" is "for i in friendlist.friends.all(): print(i.username))    
 
 
